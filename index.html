@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Summarizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider {
+            width: 150px;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .output-section {
+            margin-top: 30px;
+        }
+
+        .summary-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 150px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+            color: #4facfe;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e3e3e3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .highlighted-sentence {
+            background: rgba(79, 172, 254, 0.1);
+            padding: 2px 4px;
+            border-radius: 4px;
+            margin: 2px 0;
+            display: inline-block;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .slider-group {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Text Summarizer</h1>
+            <p>Transform long text into concise, meaningful summaries using machine learning</p>
+        </div>
+
+        <div class="main-content">
+            <div class="error" id="error"></div>
+            
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="inputText">Enter your text to summarize:</label>
+                    <textarea id="inputText" placeholder="Paste your article, document, or any long text here..."></textarea>
+                </div>
+
+                <div class="controls">
+                    <div class="slider-group">
+                        <label>Summary Length:</label>
+                        <input type="range" id="summaryLength" class="slider" min="1" max="10" value="3">
+                        <span id="lengthValue">3</span> sentences
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label>ML Method:</label>
+                        <select id="mlMethod" style="padding: 8px; border-radius: 8px; border: 2px solid #e1e5e9; font-size: 14px;">
+                            <option value="hybrid">Hybrid (Recommended)</option>
+                            <option value="tfidf">TF-IDF Based</option>
+                            <option value="frequency">Frequency Based</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" onclick="summarizeText()">
+                        🚀 Generate AI Summary
+                    </button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing text and generating summary...</p>
+            </div>
+
+            <div class="output-section">
+                <label>Summary:</label>
+                <div class="summary-box" id="summaryOutput">
+                    Your AI-generated summary will appear here...
+                </div>
+
+                <div class="stats" id="stats" style="display: none;">
+                    <div class="stat-card">
+                        <div class="stat-number" id="originalWords">0</div>
+                        <div class="stat-label">Original Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="summaryWords">0</div>
+                        <div class="stat-label">Summary Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="compressionRatio">0%</div>
+                        <div class="stat-label">Compression Ratio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="mlMethod">Hybrid</div>
+                        <div class="stat-label">ML Method</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="originalSentences">0</div>
+                        <div class="stat-label">Original Sentences</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:5000';
+        
+        // UI Event Handlers
+        document.getElementById('summaryLength').addEventListener('input', function() {
+            document.getElementById('lengthValue').textContent = this.value;
+        });
+
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.querySelector('.btn').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.querySelector('.btn').disabled = false;
+        }
+
+        function updateStats(metadata) {
+            document.getElementById('originalWords').textContent = metadata.original_words;
+            document.getElementById('summaryWords').textContent = metadata.summary_words;
+            document.getElementById('compressionRatio').textContent = metadata.compression_ratio + '%';
+            document.getElementById('mlMethod').textContent = metadata.method.charAt(0).toUpperCase() + metadata.method.slice(1);
+            document.getElementById('originalSentences').textContent = metadata.original_sentences;
+            document.getElementById('stats').style.display = 'grid';
+        }
+
+        // Check API health on page load
+        async function checkAPIHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (!response.ok) {
+                    throw new Error('API not responding');
+                }
+                console.log('✅ API is healthy and ready');
+            } catch (error) {
+                showError('⚠️ Cannot connect to Python ML backend. Make sure to run "python app.py" first.');
+                console.error('❌ API health check failed:', error);
+            }
+        }
+
+        // Main summarization function using Flask API
+        async function summarizeText() {
+            hideError();
+            
+            const inputText = document.getElementById('inputText').value.trim();
+            const maxSentences = parseInt(document.getElementById('summaryLength').value);
+            const method = document.getElementById('mlMethod').value;
+
+            if (!inputText) {
+                showError('Please enter some text to summarize.');
+                return;
+            }
+
+            if (inputText.length < 50) {
+                showError('Text is too short to summarize. Please provide at least 50 characters.');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // Call Flask API
+                const response = await fetch(`${API_BASE_URL}/summarize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: inputText,
+                        num_sentences: maxSentences,
+                        method: method
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate summary');
+                }
+
+                if (data.success) {
+                    // Display the summary with highlighting
+                    const summaryWithHighlighting = data.summary
+                        .split(/([.!?]+)/)
+                        .map((part, index) => {
+                            if (index % 2 === 0 && part.trim()) {
+                                return `<span class="highlighted-sentence">${part.trim()}</span>`;
+                            }
+                            return part;
+                        })
+                        .join('');
+
+                    document.getElementById('summaryOutput').innerHTML = summaryWithHighlighting;
+                    updateStats(data.metadata);
+                    
+                    console.log('✅ Summary generated successfully using', data.metadata.method, 'method');
+                } else {
+                    throw new Error(data.error || 'Unknown error occurred');
+                }
+
+            } catch (error) {
+                console.error('❌ Summarization failed:', error);
+                
+                if (error.message.includes('fetch')) {
+                    showError('Cannot connect to the ML backend. Please make sure the Flask server is running (python app.py).');
+                } else {
+                    showError(error.message);
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Sample text for demonstration
+        document.addEventListener('DOMContentLoaded', function() {
+            const sampleText = `Artificial Intelligence (AI) has become one of the most transformative technologies of the 21st century. Machine learning algorithms can now process vast amounts of data to identify patterns and make predictions with remarkable accuracy. Natural Language Processing enables computers to understand and generate human language, while computer vision allows machines to interpret visual information. These capabilities are revolutionizing industries from healthcare and finance to transportation and entertainment. AI-powered systems can diagnose diseases, optimize financial portfolios, enable autonomous vehicles, and create personalized content recommendations. However, the rapid advancement of AI also raises important ethical questions about privacy, job displacement, and the need for responsible development. As we continue to integrate AI into our daily lives, it becomes crucial to ensure these technologies are developed and deployed in ways that benefit humanity while minimizing potential risks. The future of AI promises even more exciting possibilities, including general artificial intelligence that could match or exceed human cognitive abilities across all domains. Companies like OpenAI, Google, and Microsoft are investing billions of dollars in AI research and development. The global AI market is expected to reach $1.8 trillion by 2030, according to recent industry reports.`;
+            
+            document.getElementById('inputText').value = sampleText;
+            
+            // Check API health
+            setTimeout(checkAPIHealth, 1000);
+        });
+
+        // Allow Enter key to trigger summarization (Ctrl+Enter)
+        document.getElementById('inputText').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                summarizeText();
+            }
+        });
+
+        // Show method information
+        document.getElementById('mlMethod').addEventListener('change', function() {
+            const method = this.value;
+            const descriptions = {
+                'hybrid': 'Combines frequency and TF-IDF approaches for optimal results',
+                'tfidf': 'Uses advanced TF-IDF vectorization for sophisticated term weighting', 
+                'frequency': 'Uses word frequency analysis with intelligent stop word filtering'
+            };
+            
+            console.log(`📊 Selected method: ${method} - ${descriptions[method]}`);
+        });
+    </script>
+</body>
+</html>
