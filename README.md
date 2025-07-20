@@ -1,6 +1,6 @@
 # TEXT-SUMMARIZATION-TOOL
 
-## Company: CODEC Technologies
+## Company: CODTECH Technologies
 
 ## Name : Harsh Mehta
 
